@@ -1,0 +1,5 @@
+{
+  "semi": false,
+  "tailwindFunctions": ["classNames"],
+  "plugins": ["prettier-plugin-tailwindcss"]
+}
