@@ -1,5 +1,11 @@
-export default function Home() {
+"use client"
+import { DictionaryManager } from '@/components/DictionaryManager'
+
+export default function DictionaryPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24"></main>
+    <main>
+      <h1 className="text-2xl font-bold text-center my-8">词典管理</h1>
+      <DictionaryManager />
+    </main>
   )
 }

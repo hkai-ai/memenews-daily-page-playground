@@ -27,17 +27,11 @@ import { ErrorDaily } from "@/lib/components/features/daily/EmptyDaily"
 import { DailyPageFooter } from "@/lib/components/features/daily/DailyPageFooter"
 import { ShareDailyDialog } from "@/lib/components/features/daily/ShareDailyDialog"
 import { cn } from "@/lib/utils"
-import { deleteDailyFavoriteAction } from "@/lib/api/daily/delete-daily-favorite"
-import { addDailyFavoriteAction } from "@/lib/api/daily/add-daily-favorite"
-import { useDefinition } from "@/lib/context/DefinitionContext"
-import { useTranslation } from "@/lib/context/TranslationContext"
 import { VerifiedAvatar } from "@/lib/components/common/ui/vertified-avatar"
 import { SubscribeButton } from "@/lib/components/features/subscriptions/SubscribeButton"
-import { sendCounterMetrics } from "@/lib/api/telemetry/metrics"
-import { GetDailyDetailsByIdRes, UserRefFrom } from "@/types/daily"
 import { DailyTips } from "@/lib/components/features/daily/DailyTips"
 import { ScrollProgress } from "@/lib/components/common/ui/scroll-progress"
-
+import { DailyPageContentResponse } from "@/lib/types/DailyPageContent"
 const HIDE_SUBTITLE_KEY = "daily-hide-subtitle"
 const HIDE_ASSOCIATED_CONTENT_KEY = "daily-hide-associated-content"
 const MIX_CONTENT_KEY = "daily-mix-content"
@@ -46,8 +40,6 @@ const MIX_CONTENT_KEY = "daily-mix-content"
  * @bug 该页面在微信的内置浏览器中的默认比例下，内容会溢出
  */
 export default function Page({ params }: { params: { slug: string } }) {
-    const { hideDefinitions, setHideDefinitions } = useDefinition()
-    const { defaultTranslation, setDefaultTranslation } = useTranslation()
     const { open } = useSidebar()
     const [catalogs, setCatalogs] = useState<{ title: string; id: number }[]>([])
     const [date, setDate] = useState<string>("")
@@ -56,7 +48,7 @@ export default function Page({ params }: { params: { slug: string } }) {
     const [loaded, setLoaded] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
     const [dailyDetailQuery, setDailyDetailQuery] = useState<
-        GetDailyDetailsByIdRes | undefined
+        DailyPageContentResponse | undefined
     >(undefined)
     const contentContainerRef = useRef<HTMLDivElement>(null)
 
@@ -109,43 +101,6 @@ export default function Page({ params }: { params: { slug: string } }) {
         }
     }, [isMixContent])
 
-    const {
-        data: dailyDetailQueryResponse,
-        loading: loadingGetDailyDetail,
-        run: getDailyDetail,
-        refresh: refreshDailyDetail,
-    } = useRequest(
-        () =>
-            getDailyDetailByIdAction({
-                id: Number(params.slug),
-                userId,
-                isMixed: isMixContent,
-            }),
-        {
-            refreshDeps: [userId],
-            onSuccess: (data) => {
-                setCatalogs(
-                    data.data.content.map((item) => ({
-                        title: item.title,
-                        id: item.id,
-                    })),
-                )
-                setIsFavorited(data.data.isFavorited)
-                setPlanId(data.data.refSubscribePlanId)
-                setDailyDetailQuery(data)
-                setDate(
-                    new Date(data.data.date).toLocaleDateString("en-US", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                    }),
-                )
-            },
-            onFinally: () => {
-                setLoaded(true)
-            },
-        },
-    )
 
     const { runAsync: addDailyFavorite } = useRequest(addDailyFavoriteAction, {
         manual: true,
