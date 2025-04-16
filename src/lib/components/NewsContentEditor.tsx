@@ -51,7 +51,7 @@ export function NewsContentEditor({ initialContent, onChange }: NewsContentEdito
                     onClick={syncDictionaryTerms}
                     className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                 >
-                    同步更新词典术语
+                    更新预览
                 </button>
             </div>
 
