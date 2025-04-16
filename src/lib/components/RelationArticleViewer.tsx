@@ -16,17 +16,15 @@ import {
 import { useState, useEffect } from "react"
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch"
 
-import { Dialog, DialogContent, DialogTrigger } from "../../common/ui/dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "../../common/ui/avatar"
-import { Icons } from "../../common/icon"
-
 import { preProcessContent } from "./NewsContent"
 
-import { cn } from "@/lib/utils"
+import { Dialog, DialogContent, DialogTrigger } from "@/lib/components/common/ui/dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/lib/components/common/ui/avatar"
+import { Icons } from "@/lib/components/common/icon"
+import { cn, isUrl } from "@/lib/utils"
 import { dailyPageRelationArticleMarkdownConvertComponents } from "@/lib/markdown/converter"
-import { AssociatedContent } from "@/types/daily"
+import { AssociatedContent } from "@/lib/types/AssociatedContent"
 import { Toggle } from "@/lib/components/common/ui/toggle"
-import { isUrl } from "@/utils/isUrl"
 import { useTranslation } from "@/lib/context/TranslationContext"
 
 const PLATFORM_ICONS_MAP = {
@@ -417,7 +415,7 @@ export function RelationArticleViewer({
                   size="sm"
                   aria-label="Toggle translation"
                   pressed={dialogDisplayContent === data.parsedText}
-                  onPressedChange={(pressed) => {
+                  onPressedChange={(pressed: boolean) => {
                     setDialogDisplayContent(
                       pressed ? data.parsedText : data.originalText,
                     )

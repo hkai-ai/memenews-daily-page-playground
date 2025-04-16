@@ -61,7 +61,14 @@ export function DictionaryManager() {
         }
         const storageKey = `dict_${formData.term}`
         setDictionaryData(dictionaryData, storageKey)
-        setDictionaries(prev => [...prev, formData.term])
+
+        // 只有当词典不存在时才添加到列表中
+        setDictionaries(prev => {
+            if (!prev.includes(formData.term)) {
+                return [...prev, formData.term]
+            }
+            return prev
+        })
     }
 
     /**
@@ -144,10 +151,43 @@ export function DictionaryManager() {
                 {/* 表单区域 */}
                 <div className="col-span-9">
                     <div className="bg-white rounded-lg shadow-md p-6">
-                        <h2 className="text-xl font-semibold mb-6 text-gray-800">
-                            {selectedDict ? '编辑词典' : '添加新词典'}
-                        </h2>
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit}>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-semibold text-gray-800">
+                                    {selectedDict ? '编辑词典' : '添加新词典'}
+                                </h2>
+                                <div className="flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({
+                                            id: Date.now(),
+                                            term: '',
+                                            definition: '',
+                                            origin: null,
+                                            refTerm: null,
+                                            domain: [],
+                                            imageUrls: [],
+                                            aiBasicDefinition: '',
+                                            aiSimplestDefinition: '',
+                                            aiComplexDefinition: '',
+                                            createdAt: new Date().toISOString(),
+                                            updatedAt: new Date().toISOString()
+                                        })}
+                                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 
+                                            hover:bg-gray-50 transition-colors"
+                                    >
+                                        新增词典
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 
+                                            transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                    >
+                                        保存词典
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -233,37 +273,6 @@ export function DictionaryManager() {
                                         className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-blue-500 
                                             focus:border-blue-500 outline-none transition-colors"
                                     />
-                                </div>
-
-                                <div className="flex justify-end space-x-4 pt-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({
-                                            id: Date.now(),
-                                            term: '',
-                                            definition: '',
-                                            origin: null,
-                                            refTerm: null,
-                                            domain: [],
-                                            imageUrls: [],
-                                            aiBasicDefinition: '',
-                                            aiSimplestDefinition: '',
-                                            aiComplexDefinition: '',
-                                            createdAt: new Date().toISOString(),
-                                            updatedAt: new Date().toISOString()
-                                        })}
-                                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 
-                                            hover:bg-gray-50 transition-colors"
-                                    >
-                                        重置
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 
-                                            transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                    >
-                                        保存词典
-                                    </button>
                                 </div>
                             </div>
                         </form>

@@ -4,8 +4,9 @@ import React, { useState, useEffect, useCallback } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 
-import { getDictionaryAction } from "@/lib/api/daily/get-dictionary"
-import { useDictionaryTooltip } from "@/lib/context/article/DictionaryTooltipContext"
+import { getDictionaryData } from "../utils"
+
+import { useDictionaryTooltip } from "@/lib/context/DictionaryTooltipContext"
 import { dictionaryMarkdownConvertComponents } from "@/lib/markdown/converter"
 
 interface DictionaryTooltipProps {
@@ -94,12 +95,13 @@ export function DictionaryTooltip({ term, uniqueId }: DictionaryTooltipProps) {
   }, [currentTerm, currentTooltipId, term, uniqueId])
 
   const fetchDictionaryData = async () => {
+    console.log("fetchDictionaryData", term)
     setIsLoading(true)
     setError(null)
 
     try {
-      const response = await getDictionaryAction({ term })
-      setDictionaryData(response.data)
+      const response = getDictionaryData(`dict_${term}`)
+      setDictionaryData(response?.data)
       setIsLoading(false)
 
       // Reset typing states
@@ -274,31 +276,28 @@ export function DictionaryTooltip({ term, uniqueId }: DictionaryTooltipProps) {
                   <div className="mt-3">
                     <div className="mb-4 flex border-b border-gray-200 dark:border-gray-700">
                       <button
-                        className={`px-4 py-2 text-sm font-medium ${
-                          activeTab === "simple"
-                            ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                            : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                        }`}
+                        className={`px-4 py-2 text-sm font-medium ${activeTab === "simple"
+                          ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                          : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                          }`}
                         onClick={() => handleTabChange("simple")}
                       >
                         😜通俗解释
                       </button>
                       <button
-                        className={`px-4 py-2 text-sm font-medium ${
-                          activeTab === "basic"
-                            ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                            : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                        }`}
+                        className={`px-4 py-2 text-sm font-medium ${activeTab === "basic"
+                          ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                          : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                          }`}
                         onClick={() => handleTabChange("basic")}
                       >
                         😉基础解释
                       </button>
                       <button
-                        className={`px-4 py-2 text-sm font-medium ${
-                          activeTab === "complex"
-                            ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                            : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                        }`}
+                        className={`px-4 py-2 text-sm font-medium ${activeTab === "complex"
+                          ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                          : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                          }`}
                         onClick={() => handleTabChange("complex")}
                       >
                         🤔深入解释

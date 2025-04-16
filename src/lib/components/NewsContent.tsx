@@ -5,19 +5,17 @@ import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { ChevronDown } from "lucide-react"
 
-import { Icons } from "../../common/icon"
-
-import { CheckReferenceLinks } from "./CheckReferenceLinks"
-import { RelationArticleViewer } from "./RelationArticleViewer"
-
+import { Icons } from "@/lib/components/common/icon"
+import { CheckReferenceLinks } from "@/lib/components/CheckReferenceLinks"
+import { RelationArticleViewer } from "@/lib/components/RelationArticleViewer"
 import { dailyPageMarkdownConvertComponents } from "@/lib/markdown/converter"
-import { getDailyDetailByIdAction } from "@/lib/api/daily"
-import { AssociatedContent, DetailContent } from "@/types/daily"
+import { DailyPageContentResponse } from "@/lib/types/DailyPageContent"
+import { DetailContent } from "@/lib/types/DetailContent"
+import { AssociatedContent } from "@/lib/types/AssociatedContent"
+
 
 interface NewsContentProps {
-  dailies: Awaited<
-    ReturnType<typeof getDailyDetailByIdAction>
-  >["data"]["content"]
+  dailies: DailyPageContentResponse["data"]["content"]
   hideAssociatedContent?: boolean
 }
 
@@ -224,9 +222,8 @@ export function NewsContent({
                   >
                     {showAll ? "收起" : `显示更多 (${repostChain.length - 5})`}
                     <ChevronDown
-                      className={`ml-1 size-4 transition-transform ${
-                        showAll ? "rotate-180" : ""
-                      }`}
+                      className={`ml-1 size-4 transition-transform ${showAll ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
                 )}

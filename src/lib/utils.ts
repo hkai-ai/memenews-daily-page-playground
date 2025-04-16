@@ -66,3 +66,18 @@ export function getDictionaryData(key: string = "daily-page-dictionary"): DailyP
     return null;
   }
 }
+
+export const isUrl = (text: string): boolean => {
+  const urlPattern = /^(?:https?:\/\/)?(?:[\w-]+\.)+[a-z]{2,}(?:\/[^\s]*)?$/i
+  return urlPattern.test(text as string)
+}
+
+/**
+ * 检测文本是否包含中文字符
+ */
+export const hasChineseCharacters = (
+  text: string | React.ReactNode,
+): boolean => {
+  if (typeof text !== "string") return false
+  return /[\u4e00-\u9fa5]/.test(text)
+}
