@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
 import { getDictionaryData, setDictionaryData } from '@/lib/utils'
 
@@ -14,7 +14,31 @@ import { getDictionaryData, setDictionaryData } from '@/lib/utils'
  * @property {string} aiBasicDefinition - AI基础定义
  * @property {string} aiSimplestDefinition - AI最简定义
  * @property {string} aiComplexDefinition - AI复杂定义
+ * @property {Reference[]} references - 引用列表
  */
+
+interface DictionaryFormData {
+    id: number
+    term: string
+    definition: string
+    origin: string | null
+    refTerm: string | null
+    domain: string[]
+    imageUrls: string[]
+    aiBasicDefinition: string
+    aiSimplestDefinition: string
+    aiComplexDefinition: string
+    createdAt: string
+    updatedAt: string
+    references: {
+        [key: string]: string
+    }
+}
+
+interface Reference {
+    id: number
+    content: string
+}
 
 /**
  * 词典管理器组件
@@ -22,7 +46,7 @@ import { getDictionaryData, setDictionaryData } from '@/lib/utils'
 export function DictionaryManager() {
     const [dictionaries, setDictionaries] = useState<string[]>([])
     const [selectedDict, setSelectedDict] = useState<string | null>(null)
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<DictionaryFormData>({
         id: Date.now(),
         term: '',
         definition: '',
@@ -34,7 +58,8 @@ export function DictionaryManager() {
         aiSimplestDefinition: '',
         aiComplexDefinition: '',
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        references: {}
     })
 
     // 加载已存储的词典列表
@@ -44,6 +69,52 @@ export function DictionaryManager() {
         )
         setDictionaries(storedKeys.map(key => key.replace('dict_', '')))
     }, [])
+
+    // 从定义中提取引用标记
+    const extractReferences = (definition: string) => {
+        const refRegex = /\[#ref(\d+)\]/g
+        const matches = definition.match(refRegex)
+        if (!matches) return []
+        return matches.map(match => {
+            const refId = match.replace(/\[#ref|\]/g, '')
+            return `#ref${refId}`
+        })
+    }
+
+    // 当定义改变时，更新引用列表
+    useEffect(() => {
+        const refIds = extractReferences(formData.definition)
+        const newReferences = { ...formData.references }
+        
+        // 删除不存在的引用
+        Object.keys(newReferences).forEach(key => {
+            if (!refIds.includes(key)) {
+                delete newReferences[key]
+            }
+        })
+        
+        // 添加新的引用
+        refIds.forEach(refId => {
+            if (!newReferences[refId]) {
+                newReferences[refId] = ''
+            }
+        })
+        
+        setFormData(prev => ({
+            ...prev,
+            references: newReferences
+        }))
+    }, [formData.definition])
+
+    const updateReference = (refId: string, content: string) => {
+        setFormData(prev => ({
+            ...prev,
+            references: {
+                ...prev.references,
+                [refId]: content
+            }
+        }))
+    }
 
     /**
      * 处理表单提交
@@ -57,10 +128,19 @@ export function DictionaryManager() {
         const dictionaryData = {
             statusCode: 200,
             statusText: 'OK',
-            data: formData
+            data: {
+                ...formData,
+                references: formData.references
+            }
         }
         const storageKey = `dict_${formData.term}`
         setDictionaryData(dictionaryData, storageKey)
+
+        // 更新 localStorage 中的引用数据
+        const storedReferences = localStorage.getItem('references')
+        const currentReferences = storedReferences ? JSON.parse(storedReferences) : {}
+        const updatedReferences = { ...currentReferences, ...formData.references }
+        localStorage.setItem('references', JSON.stringify(updatedReferences))
 
         // 只有当词典不存在时才添加到列表中
         setDictionaries(prev => {
@@ -78,7 +158,11 @@ export function DictionaryManager() {
         const data = getDictionaryData(`dict_${term}`)
         setSelectedDict(term)
         if (data) {
-            setFormData(data.data)
+            const dictionaryData = {
+                ...data.data,
+                references: data.data.references || {}
+            }
+            setFormData(dictionaryData)
         }
     }
 
@@ -104,7 +188,8 @@ export function DictionaryManager() {
                 aiSimplestDefinition: '',
                 aiComplexDefinition: '',
                 createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date().toISOString(),
+                references: {}
             })
         }
     }
@@ -171,7 +256,8 @@ export function DictionaryManager() {
                                             aiSimplestDefinition: '',
                                             aiComplexDefinition: '',
                                             createdAt: new Date().toISOString(),
-                                            updatedAt: new Date().toISOString()
+                                            updatedAt: new Date().toISOString(),
+                                            references: {}
                                         })}
                                         className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 
                                             hover:bg-gray-50 transition-colors"
@@ -274,6 +360,30 @@ export function DictionaryManager() {
                                             focus:border-blue-500 outline-none transition-colors"
                                     />
                                 </div>
+
+                                {/* 引用管理部分 */}
+                                {formData.references && Object.keys(formData.references).length > 0 && (
+                                    <div className="mt-4">
+                                        <h3 className="text-lg font-semibold mb-2">引用管理</h3>
+                                        <div className="space-y-2">
+                                            {Object.entries(formData.references).map(([refId, content]) => {
+                                                const refNumber = refId.replace('#ref', '')
+                                                return (
+                                                    <div key={refId} className="flex items-center gap-2">
+                                                        <span className="w-8 text-gray-500">[{refNumber}]</span>
+                                                        <input
+                                                            type="text"
+                                                            value={content}
+                                                            onChange={(e) => updateReference(refId, e.target.value)}
+                                                            placeholder="输入引用内容"
+                                                            className="flex-1 rounded-md border p-2"
+                                                        />
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </form>
                     </div>

@@ -186,21 +186,21 @@ export function DictionaryTooltip({ term, uniqueId }: DictionaryTooltipProps) {
 
   return (
     <div
-      className="definition-tooltip absolute z-10 w-96 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+      className="definition-tooltip absolute z-10 w-96 rounded-lg border border-gray-200 bg-white/95 backdrop-blur-sm shadow-lg dark:border-gray-700 dark:bg-gray-800/95"
       onClick={(e) => e.stopPropagation()}
     >
       {isLoading ? (
         <div className="animate-pulse">
-          <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-5 dark:from-blue-900/20 dark:to-indigo-900/20">
+          <div className="bg-gradient-to-r from-blue-100/50 to-indigo-100/50 p-5 dark:from-blue-900/10 dark:to-indigo-900/10">
             <div className="flex items-center justify-between">
-              <div className="h-8 w-1/3 rounded bg-gray-200"></div>
-              <div className="h-4 w-10 rounded bg-gray-200"></div>
+              <div className="h-8 w-1/3 rounded bg-gray-200 dark:bg-gray-700"></div>
+              <div className="h-4 w-10 rounded bg-gray-200 dark:bg-gray-700"></div>
             </div>
           </div>
           <div className="p-5">
             <div className="space-y-2">
-              <div className="h-4 w-full rounded bg-gray-200"></div>
-              <div className="h-4 w-5/6 rounded bg-gray-200"></div>
+              <div className="h-4 w-full rounded bg-gray-200 dark:bg-gray-700"></div>
+              <div className="h-4 w-5/6 rounded bg-gray-200 dark:bg-gray-700"></div>
             </div>
           </div>
         </div>
@@ -226,9 +226,9 @@ export function DictionaryTooltip({ term, uniqueId }: DictionaryTooltipProps) {
       ) : (
         dictionaryData && (
           <div className="overflow-hidden font-mono">
-            <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-5 dark:from-blue-900/20 dark:to-indigo-900/20">
+            <div className="bg-gradient-to-r from-blue-100/50 to-indigo-100/50 p-5 dark:from-blue-900/10 dark:to-indigo-900/10">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 font-sans">
                   {dictionaryData.term}
                 </h2>
                 <div className="mr-6 flex flex-wrap gap-2">
@@ -244,17 +244,24 @@ export function DictionaryTooltip({ term, uniqueId }: DictionaryTooltipProps) {
               </div>
             </div>
 
-            <div className="bg-white p-5 dark:bg-gray-800">
-              <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                {dictionaryData.definition}
+            <div className="bg-white/95 p-5 dark:bg-gray-800/95">
+              <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 font-sans">
+                <Markdown
+                  components={dictionaryMarkdownConvertComponents()}
+                  remarkPlugins={[remarkGfm]}
+                >
+                  {dictionaryPreProcessContent(dictionaryData.definition)}
+                </Markdown>
               </p>
+              <div className="h-10"></div>
+              <div className="text-right text-xs text-gray-400 font-serif italic -mt-10">From Wikipedia</div>
 
               <div className="my-4 border-t border-gray-100 dark:border-gray-700"></div>
 
               <div className="mt-3">
                 <button
                   onClick={handleDetailsToggle}
-                  className="mb-2 flex w-full cursor-pointer items-center text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="mb-2 flex w-full cursor-pointer items-center text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 font-sans"
                 >
                   <svg
                     className={`mr-2 h-4 w-4 transform transition-transform ${detailsOpen ? "rotate-180" : ""}`}
@@ -307,7 +314,7 @@ export function DictionaryTooltip({ term, uniqueId }: DictionaryTooltipProps) {
                     <div className="pl-6 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
                       <div className={activeTab === "basic" ? "" : "hidden"}>
                         <Markdown
-                          className="typing-effect"
+                          className="typing-effect font-sans"
                           components={dictionaryMarkdownConvertComponents()}
                           remarkPlugins={[remarkGfm]}
                         >
@@ -318,7 +325,7 @@ export function DictionaryTooltip({ term, uniqueId }: DictionaryTooltipProps) {
                       </div>
                       <div className={activeTab === "simple" ? "" : "hidden"}>
                         <Markdown
-                          className="typing-effect"
+                          className="typing-effect font-sans"
                           components={dictionaryMarkdownConvertComponents()}
                           remarkPlugins={[remarkGfm]}
                         >
@@ -329,7 +336,7 @@ export function DictionaryTooltip({ term, uniqueId }: DictionaryTooltipProps) {
                       </div>
                       <div className={activeTab === "complex" ? "" : "hidden"}>
                         <Markdown
-                          className="typing-effect"
+                          className="typing-effect font-sans"
                           components={dictionaryMarkdownConvertComponents()}
                           remarkPlugins={[remarkGfm]}
                         >

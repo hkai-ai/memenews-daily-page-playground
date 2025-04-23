@@ -5,6 +5,7 @@ import { DictionaryManager } from '@/lib/components/DictionaryManager'
 import { NewsContent } from '@/lib/components/NewsContent'
 import { DailyPageContentResponse } from '@/lib/types/DailyPageContent'
 import { NewsContentEditor } from '@/lib/components/NewsContentEditor'
+import { ReferenceManager } from '@/lib/components/ReferenceManager'
 
 const sampleData: DailyPageContentResponse["data"]["content"] = [
   {
@@ -43,6 +44,7 @@ export default function DictionaryPage() {
         />
         <div className="flex-1 overflow-auto">
           <DictionaryManager />
+          <ReferenceManager />
         </div>
       </div>
 

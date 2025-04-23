@@ -11,12 +11,29 @@ import { dictionaryPreProcessContent } from "./DictionaryTooltip"
 import { Dialog, DialogContent } from "@/lib/components/common/ui/dialog"
 import { DailyPageContentResponse } from "@/lib/types/DailyPageContent"
 import { dictionaryMarkdownConvertComponents } from "@/lib/markdown/converter"
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/lib/components/common/ui/hover-card"
 
 interface DictionaryDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   term: string
 }
+
+// 定义引用组件
+const ReferenceSpan = ({ refId, content }: { refId: string, content: string }) => (
+  <HoverCard openDelay={0} closeDelay={0}>
+    <HoverCardTrigger className="inline-block cursor-pointer text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300">
+      [{refId}]
+    </HoverCardTrigger>
+    <HoverCardContent align="start" side="right" className="w-80 text-sm bg-white dark:bg-gray-800 p-4 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700">
+      <p className="text-gray-700 dark:text-gray-300">{content}</p>
+    </HoverCardContent>
+  </HoverCard>
+)
 
 export function DictionaryDialog({
   isOpen,
@@ -38,6 +55,36 @@ export function DictionaryDialog({
   )
 
   const [detailsOpen, setDetailsOpen] = useState(false)
+
+  // 从 localStorage 获取引用数据
+  const getReferences = (): { id: number; content: string }[] => {
+    const storedReferences = localStorage.getItem('references')
+    return storedReferences ? JSON.parse(storedReferences) : []
+  }
+
+  // 处理定义文本，将引用标记替换为 React 组件
+  const renderDefinitionWithReferences = (text: string) => {
+    if (!text) return null;
+    
+    const references = getReferences()
+    const parts = text.split(/(\[#ref\d+\])/g)
+    
+    return (
+      <span>
+        {parts.map((part, index) => {
+          const match = part.match(/\[#ref(\d+)\]/)
+          if (match) {
+            const refId = match[1]
+            const reference = references.find(ref => ref.id === parseInt(refId))
+            if (reference) {
+              return <ReferenceSpan key={index} refId={refId} content={reference.content} />
+            }
+          }
+          return <span key={index}>{part}</span>
+        })}
+      </span>
+    )
+  }
 
   useEffect(() => {
     if (isOpen && term) {
@@ -147,148 +194,135 @@ export function DictionaryDialog({
             </div>
           </div>
         ) : error ? (
-          <div className="p-4 text-center">
-            <div className="text-red-500 dark:text-red-400">
-              <svg
-                className="mx-auto mb-2 h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <p>{error}</p>
-            </div>
-          </div>
+          <div className="p-5 text-center text-red-500">{error}</div>
         ) : (
-          dictionaryData && (
-            <div className="overflow-hidden font-mono">
-              <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-5 dark:from-blue-900/20 dark:to-indigo-900/20">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                    {dictionaryData.term}
-                  </h2>
-                  <div className="mr-6 flex flex-wrap gap-2">
-                    {dictionaryData.domain.map((tag: string, index: number) => (
-                      <span
-                        key={index}
-                        className="rounded-full bg-blue-300/50 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-800/50 dark:text-blue-100"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+          <div className="bg-white dark:bg-gray-800">
+            <div className="bg-gradient-to-r from-blue-100 to-indigo-100 p-5 dark:from-blue-900/20 dark:to-indigo-900/20">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+                  {dictionaryData.term}
+                </h2>
+                <button
+                  onClick={() => onOpenChange(false)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4">
+              <div className="my-2 text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {renderDefinitionWithReferences(dictionaryData.definition)}
               </div>
 
-              <div className="bg-white p-5 dark:bg-gray-800">
-                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                  {dictionaryData.definition}
-                </p>
+              <div className="my-4 border-t border-gray-100 dark:border-gray-700"></div>
 
-                <div className="my-4 border-t border-gray-100 dark:border-gray-700"></div>
-
-                <div className="mt-3">
-                  <button
-                    onClick={handleDetailsToggle}
-                    className="mb-2 flex w-full cursor-pointer items-center text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+              <div className="mt-3">
+                <button
+                  onClick={handleDetailsToggle}
+                  className="mb-2 flex w-full cursor-pointer items-center text-sm text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <svg
+                    className={`mr-2 h-4 w-4 transform transition-transform ${detailsOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      className={`mr-2 h-4 w-4 transform transition-transform ${detailsOpen ? "rotate-180" : ""}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                    <span>AI解释</span>
-                  </button>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                  <span>AI解释</span>
+                </button>
 
-                  {detailsOpen && (
-                    <div className="mt-3">
-                      <div className="mb-4 flex border-b border-gray-200 dark:border-gray-700">
-                        <button
-                          className={`px-4 py-2 text-sm font-medium ${activeTab === "simple"
-                            ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                            : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                            }`}
-                          onClick={() => handleTabChange("simple")}
+                {detailsOpen && (
+                  <div className="mt-3">
+                    <div className="mb-4 flex border-b border-gray-200 dark:border-gray-700">
+                      <button
+                        className={`px-4 py-2 text-sm font-medium ${activeTab === "simple"
+                          ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                          : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                          }`}
+                        onClick={() => handleTabChange("simple")}
+                      >
+                        😜通俗解释
+                      </button>
+                      <button
+                        className={`px-4 py-2 text-sm font-medium ${activeTab === "basic"
+                          ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                          : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                          }`}
+                        onClick={() => handleTabChange("basic")}
+                      >
+                        😉基础解释
+                      </button>
+                      <button
+                        className={`px-4 py-2 text-sm font-medium ${activeTab === "complex"
+                          ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
+                          : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                          }`}
+                        onClick={() => handleTabChange("complex")}
+                      >
+                        🤔深入解释
+                      </button>
+                    </div>
+
+                    <div>
+                      <div className={activeTab === "basic" ? "" : "hidden"}>
+                        <Markdown
+                          className="typing-effect"
+                          components={dictionaryMarkdownConvertComponents()}
+                          remarkPlugins={[remarkGfm]}
                         >
-                          😜通俗解释
-                        </button>
-                        <button
-                          className={`px-4 py-2 text-sm font-medium ${activeTab === "basic"
-                            ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                            : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                            }`}
-                          onClick={() => handleTabChange("basic")}
-                        >
-                          😉基础解释
-                        </button>
-                        <button
-                          className={`px-4 py-2 text-sm font-medium ${activeTab === "complex"
-                            ? "border-b-2 border-blue-600 text-blue-600 dark:border-blue-400 dark:text-blue-400"
-                            : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                            }`}
-                          onClick={() => handleTabChange("complex")}
-                        >
-                          🤔深入解释
-                        </button>
+                          {dictionaryPreProcessContent(
+                            typingStates.basic.text || "",
+                          )}
+                        </Markdown>
                       </div>
-
-                      <div className="pl-6 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                        <div className={activeTab === "basic" ? "" : "hidden"}>
-                          <Markdown
-                            className="typing-effect"
-                            components={dictionaryMarkdownConvertComponents()}
-                            remarkPlugins={[remarkGfm]}
-                          >
-                            {dictionaryPreProcessContent(
-                              typingStates.basic.text || "",
-                            )}
-                          </Markdown>
-                        </div>
-                        <div className={activeTab === "simple" ? "" : "hidden"}>
-                          <Markdown
-                            className="typing-effect"
-                            components={dictionaryMarkdownConvertComponents()}
-                            remarkPlugins={[remarkGfm]}
-                          >
-                            {dictionaryPreProcessContent(
-                              typingStates.simple.text || "",
-                            )}
-                          </Markdown>
-                        </div>
-                        <div
-                          className={activeTab === "complex" ? "" : "hidden"}
+                      <div className={activeTab === "simple" ? "" : "hidden"}>
+                        <Markdown
+                          className="typing-effect"
+                          components={dictionaryMarkdownConvertComponents()}
+                          remarkPlugins={[remarkGfm]}
                         >
-                          <Markdown
-                            className="typing-effect"
-                            components={dictionaryMarkdownConvertComponents()}
-                            remarkPlugins={[remarkGfm]}
-                          >
-                            {dictionaryPreProcessContent(
-                              typingStates.complex.text || "",
-                            )}
-                          </Markdown>
-                        </div>
+                          {dictionaryPreProcessContent(
+                            typingStates.simple.text || "",
+                          )}
+                        </Markdown>
+                      </div>
+                      <div className={activeTab === "complex" ? "" : "hidden"}>
+                        <Markdown
+                          className="typing-effect"
+                          components={dictionaryMarkdownConvertComponents()}
+                          remarkPlugins={[remarkGfm]}
+                        >
+                          {dictionaryPreProcessContent(
+                            typingStates.complex.text || "",
+                          )}
+                        </Markdown>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
-          )
+          </div>
         )}
       </DialogContent>
     </Dialog>

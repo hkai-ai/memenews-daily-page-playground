@@ -23,5 +23,11 @@ interface DailyPageDictionary {
         aiComplexDefinition: string
         createdAt: string
         updatedAt: string
+        /**
+         * 引用列表
+         */
+        references: {
+            [key: string]: string
+        }
     }
 }

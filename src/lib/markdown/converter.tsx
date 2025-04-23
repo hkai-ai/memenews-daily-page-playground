@@ -4,16 +4,26 @@
  * 该模块用于定义在 daily page 中使用的转义函数以适应相应页面样式
  */
 
+import * as React from "react"
 import { type Components } from "react-markdown"
 import { useEffect, useState } from "react"
 
 import { cn, isUrl, hasChineseCharacters } from "../utils"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/common/ui/tooltip'
 
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/lib/components/common/ui/hover-card'
 import { useDefinition } from "@/lib/context/DictionaryContext"
 import { useDictionaryDialog } from "@/lib/context/DictionaryDialog"
 import { useDictionaryTooltip } from "@/lib/context/DictionaryTooltipContext"
 import { DictionaryTooltip } from "@/lib/components/DictionaryTooltip"
 
+interface Reference {
+    [key: string]: string
+}
 
 export const useIsMobile = () => {
     const [isMobile, setIsMobile] = useState<boolean>(false)
@@ -187,162 +197,178 @@ const useKeywordDefinitions = (terms: string[] = []) => {
 /**
  * 日报详情页正文的转换函数
  */
-export const dailyPageMarkdownConvertComponents = (
-    dictionaryTerms?: string[],
-): Components => ({
-    // 由于 DailyPage 的条目标题为 h1 ，因此，原文总结的所有内容标题都要进行相应的降级
-    /**
-     * 🗑️ 大概率不会用到
-     */
-    h1: ({ children }) => (
-        <h1 className="mb-2 mt-6 font-semibold leading-loose tracking-wide text-blue-400 dark:text-blue-300 md:text-base lg:text-2xl">
-            {children}
-        </h1>
-    ),
-    /**
-     * 🗑️ 大概率不会用到
-     */
-    h2: ({ children }) => (
-        <h2 className="mb-2 mt-5 font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100 md:text-base lg:text-xl">
-            {children}
-        </h2>
-    ),
-    /**
-     * 👾 正常来说正文的标题级别
-     */
-    h3: ({ children }) => (
-        <h3
-            id="subTitle"
-            className="mb-1.5 mt-4 text-base font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100"
-        >
-            {children}
-        </h3>
-    ),
-    /**
-     * 🗑️ 大概率不会用到
-     */
-    h4: ({ children }) => (
-        <h4 className="mb-1 mt-3.5 text-sm font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100">
-            {children}
-        </h4>
-    ),
-    /**
-     * 🗑️ 大概率不会用到
-     */
-    h5: ({ children }) => (
-        <h5 className="mb-0.5 mt-3 font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100 lg:text-sm">
-            {children}
-        </h5>
-    ),
-    /**
-     * 🗑️ 大概率不会用到
-     */
-    h6: ({ children }) => (
-        <h6 className="mb-0.5 mt-2 font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100 lg:text-xs">
-            {children}
-        </h6>
-    ),
-    /**
-     * 👾 正文的内容
-     */
-    p: ({ children }) => {
-        const ParagraphComponent = () => {
-            const { hideDefinitions } = useDefinition()
-            const { highlightKeywords } = useKeywordDefinitions(dictionaryTerms)
+export const dailyPageMarkdownConvertComponents = (dictionaryTerms: string[] = []): Components => {
+    // 从 localStorage 获取引用数据
+    const getReferences = (): Reference => {
+        const storedReferences = localStorage.getItem('references')
+        return storedReferences ? JSON.parse(storedReferences) : {}
+    }
 
+    return {
+        // 由于 DailyPage 的条目标题为 h1 ，因此，原文总结的所有内容标题都要进行相应的降级
+        /**
+         * 🗑️ 大概率不会用到
+         */
+        h1: ({ children }) => (
+            <h1 className="mb-2 mt-6 font-semibold leading-loose tracking-wide text-blue-400 dark:text-blue-300 md:text-base lg:text-2xl">
+                {children}
+            </h1>
+        ),
+        /**
+         * 🗑️ 大概率不会用到
+         */
+        h2: ({ children }) => (
+            <h2 className="mb-2 mt-5 font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100 md:text-base lg:text-xl">
+                {children}
+            </h2>
+        ),
+        /**
+         * 👾 正常来说正文的标题级别
+         */
+        h3: ({ children }) => (
+            <h3
+                id="subTitle"
+                className="mb-1.5 mt-4 text-base font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100"
+            >
+                {children}
+            </h3>
+        ),
+        /**
+         * 🗑️ 大概率不会用到
+         */
+        h4: ({ children }) => (
+            <h4 className="mb-1 mt-3.5 text-sm font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100">
+                {children}
+            </h4>
+        ),
+        /**
+         * 🗑️ 大概率不会用到
+         */
+        h5: ({ children }) => (
+            <h5 className="mb-0.5 mt-3 font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100 lg:text-sm">
+                {children}
+            </h5>
+        ),
+        /**
+         * 🗑️ 大概率不会用到
+         */
+        h6: ({ children }) => (
+            <h6 className="mb-0.5 mt-2 font-semibold leading-loose tracking-wide text-gray-800 dark:text-gray-100 lg:text-xs">
+                {children}
+            </h6>
+        ),
+        /**
+         * 👾 正文的内容
+         */
+        p: ({ children }) => {
+            const ParagraphComponent = () => {
+                const { hideDefinitions } = useDefinition()
+                const { highlightKeywords } = useKeywordDefinitions(dictionaryTerms)
+
+                return (
+                    <p
+                        className={cn(
+                            "relative mb-5 text-base leading-[30px] text-[#4c4e4d] dark:text-gray-200",
+                            getTextWrapClassName(children),
+                        )}
+                    >
+                        {highlightKeywords(children as string, hideDefinitions)}
+                    </p>
+                )
+            }
+
+            return <ParagraphComponent />
+        },
+        /**
+         * 👾 可能会被匹配到
+         */
+        ul: ({ children }) => <ul className="my-2 ml-4 list-disc">{children}</ul>,
+        /**
+         * 👾 可能会被匹配到
+         */
+        ol: ({ children }) => (
+            <ol className="my-2 ml-4 list-decimal text-justify">{children}</ol>
+        ),
+        /**
+         * 👾 列表会被匹配到这里
+         */
+        li: ({ children }) => (
+            <li
+                className={cn(
+                    "my-1 text-sm text-[#4c4e4d] dark:text-gray-300",
+                    getTextWrapClassName(children),
+                )}
+            >
+                {children}
+            </li>
+        ),
+        /**
+         * 👾 可能会被匹配到
+         */
+        blockquote: ({ children }) => (
+            <blockquote className="my-2 border-l-4 border-gray-400 pl-2 dark:border-gray-600 dark:text-gray-300">
+                {children}
+            </blockquote>
+        ),
+        br: () => <br className="my-2" />,
+        // 代码块的渲染应该考虑使用其他 plugins
+        code: ({ children }) => (
+            <code className="my-2 whitespace-pre-wrap text-base">{children}</code>
+        ),
+        pre: ({ children }) => (
+            <pre className="my-2 whitespace-pre-wrap text-base">{children}</pre>
+        ),
+        em: ({ children }) => <em className="italic">{children}</em>,
+        strong: ({ children }) => (
+            <strong className="font-normal text-[#A60000] dark:text-[#FF9999]">
+                {children}
+            </strong>
+        ),
+        del: ({ children }) => <del className="line-through">{children}</del>,
+        /**
+         * 👾 链接会被匹配到
+         */
+        a: ({ children, href }) => {
+            // 检查是否是引用标记
+            const refMatch = href?.match(/^#ref(\d+)$/)
+            if (refMatch) {
+                // 如果是引用标记，直接返回原始文本
+                return <span>[{refMatch[1]}]</span>
+            }
+            
+            // 普通链接处理
             return (
-                <p
+                <a
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={cn(
-                        "relative mb-5 text-base leading-[30px] text-[#4c4e4d] dark:text-gray-200",
+                        "text-blue-500 underline hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300",
                         getTextWrapClassName(children),
                     )}
+                    href={href}
                 >
-                    {highlightKeywords(children as string, hideDefinitions)}
-                </p>
+                    {children}
+                </a>
             )
-        }
-
-        return <ParagraphComponent />
-    },
-    /**
-     * 👾 可能会被匹配到
-     */
-    ul: ({ children }) => <ul className="my-2 ml-4 list-disc">{children}</ul>,
-    /**
-     * 👾 可能会被匹配到
-     */
-    ol: ({ children }) => (
-        <ol className="my-2 ml-4 list-decimal text-justify">{children}</ol>
-    ),
-    /**
-     * 👾 列表会被匹配到这里
-     */
-    li: ({ children }) => (
-        <li
-            className={cn(
-                "my-1 text-sm text-[#4c4e4d] dark:text-gray-300",
-                getTextWrapClassName(children),
-            )}
-        >
-            {children}
-        </li>
-    ),
-    /**
-     * 👾 可能会被匹配到
-     */
-    blockquote: ({ children }) => (
-        <blockquote className="my-2 border-l-4 border-gray-400 pl-2 dark:border-gray-600 dark:text-gray-300">
-            {children}
-        </blockquote>
-    ),
-    br: () => <br className="my-2" />,
-    // 代码块的渲染应该考虑使用其他 plugins
-    code: ({ children }) => (
-        <code className="my-2 whitespace-pre-wrap text-base">{children}</code>
-    ),
-    pre: ({ children }) => (
-        <pre className="my-2 whitespace-pre-wrap text-base">{children}</pre>
-    ),
-    em: ({ children }) => <em className="italic">{children}</em>,
-    strong: ({ children }) => (
-        <strong className="font-normal text-[#A60000] dark:text-[#FF9999]">
-            {children}
-        </strong>
-    ),
-    del: ({ children }) => <del className="line-through">{children}</del>,
-    /**
-     * 👾 链接会被匹配到
-     */
-    a: ({ children, href }) => (
-        <a
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-                "text-blue-500 underline hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300",
-                getTextWrapClassName(children),
-            )}
-            href={href}
-        >
-            {children}
-        </a>
-    ),
-    /**
-     * 👾 图片会被匹配到
-     */
-    img: ({ src, alt }) => (
-        <img className="my-2 w-full object-cover" src={src} alt={alt} />
-    ),
-    /**
-     * 👾 分割线，目前在日推项见过
-     */
-    hr: () => <hr className="my-2 dark:border-gray-700" />,
-    /**
-     * 🗑️ 大概率不会用到
-     */
-    table: ({ children }) => (
-        <table className="border-collapse dark:text-gray-200">{children}</table>
-    ),
-})
+        },
+        /**
+         * 👾 图片会被匹配到
+         */
+        img: ({ src, alt }) => (
+            <img className="my-2 w-full object-cover" src={src} alt={alt} />
+        ),
+        /**
+         * 👾 分割线，目前在日推项见过
+         */
+        hr: () => <hr className="my-2 dark:border-gray-700" />,
+        /**
+         * 🗑️ 大概率不会用到
+         */
+        table: ({ children }) => (
+            <table className="border-collapse dark:text-gray-200">{children}</table>
+        ),
+    }
+}
 
 /**
  * 日报详情页关系型数据的转换函数
@@ -462,56 +488,132 @@ export const dailyPageRelationArticleMarkdownConvertComponents: Components = {
 /**
  * 词典页的转换函数
  */
-export const dictionaryMarkdownConvertComponents = (): Components => ({
-    p: ({ children }) => <p className="my-2 text-sm">{children}</p>,
-    ul: ({ children }) => <ul className="my-2 ml-4 list-disc">{children}</ul>,
-    ol: ({ children }) => (
-        <ol className="my-2 ml-4 list-decimal text-justify">{children}</ol>
-    ),
-    li: ({ children }) => (
-        <li
-            className={cn(
-                "my-1 text-sm text-[#4c4e4d] dark:text-gray-300",
-                getTextWrapClassName(children),
-            )}
-        >
-            {children}
-        </li>
-    ),
-    blockquote: ({ children }) => (
-        <blockquote className="my-2 border-l-4 border-gray-400 pl-2 dark:border-gray-600 dark:text-gray-300">
-            {children}
-        </blockquote>
-    ),
-    br: () => <br className="my-2" />,
-    code: ({ children }) => (
-        <code className="my-2 whitespace-pre-wrap text-base">{children}</code>
-    ),
-    pre: ({ children }) => (
-        <pre className="my-2 whitespace-pre-wrap text-base">{children}</pre>
-    ),
-    em: ({ children }) => <em className="italic">{children}</em>,
-    strong: ({ children }) => (
-        <strong className="font-normal text-[#A60000] dark:text-[#FF9999]">
-            {children}
-        </strong>
-    ),
-    del: ({ children }) => <del className="line-through">{children}</del>,
-    a: ({ children, href }) => (
-        <a
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-                "text-blue-500 underline hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300",
-                getTextWrapClassName(children),
-            )}
-            href={href}
-        >
-            {children}
-        </a>
-    ),
-    img: ({ src, alt }) => (
-        <img className="my-2 w-full object-cover" src={src} alt={alt} />
-    ),
-    hr: () => <hr className="my-2 dark:border-gray-700" />,
-})
+export const dictionaryMarkdownConvertComponents = (): Components => {
+    const getReferences = (): Reference => {
+        const storedReferences = localStorage.getItem('references')
+        return storedReferences ? JSON.parse(storedReferences) : {}
+    }
+
+    const ReferenceTooltip = ({ refId }: { refId: string }) => {
+        const references = getReferences()
+        const reference = references[`#ref${refId}`]
+        if (!reference) return null
+
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <span className="inline-block cursor-help text-blue-500 hover:text-blue-700 text-xs align-super transition-colors duration-200 ml-[-0.2em] mr-1">
+                            [{refId}]
+                        </span>
+                    </TooltipTrigger>
+                    <TooltipContent 
+                        side="right" 
+                        align="start" 
+                        sideOffset={10} 
+                        className="z-[100] max-w-[300px] bg-white/95 backdrop-blur-sm p-4 text-sm shadow-lg rounded-lg border border-gray-200 dark:bg-gray-800/95 dark:border-gray-700"
+                    >
+                        <div className="flex items-start gap-3">
+                            <span className="text-blue-500 font-medium bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded-md">[{refId}]</span>
+                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                                {reference}
+                            </p>
+                        </div>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        )
+    }
+
+    return {
+        p: ({ children }) => {
+            const processReferences = (text: string) => {
+                if (typeof text !== 'string') return text;
+                
+                const parts = text.split(/(\[#ref\d+\])/g)
+                return (
+                    <>
+                        {parts.map((part, index) => {
+                            const match = part.match(/\[#ref(\d+)\]/)
+                            if (match) {
+                                const refId = match[1]
+                                return <ReferenceTooltip key={index} refId={refId} />
+                            }
+                            return <span key={index}>{part}</span>
+                        })}
+                    </>
+                )
+            }
+
+            if (typeof children === 'string') {
+                return (
+                    <p className="my-2 text-sm text-gray-700 dark:text-gray-300">
+                        {processReferences(children)}
+                    </p>
+                )
+            }
+            if (Array.isArray(children)) {
+                return (
+                    <p className="my-2 text-sm text-gray-700 dark:text-gray-300">
+                        {children.map((child, index) => 
+                            typeof child === 'string' 
+                                ? <React.Fragment key={index}>{processReferences(child)}</React.Fragment>
+                                : child
+                        )}
+                    </p>
+                )
+            }
+            return <p className="my-2 text-sm text-gray-700 dark:text-gray-300">{children}</p>
+        },
+        ul: ({ children }) => <ul className="my-2 ml-4 list-disc">{children}</ul>,
+        ol: ({ children }) => (
+            <ol className="my-2 ml-4 list-decimal text-justify">{children}</ol>
+        ),
+        li: ({ children }) => (
+            <li
+                className={cn(
+                    "my-1 text-sm text-[#4c4e4d] dark:text-gray-300",
+                    getTextWrapClassName(children),
+                )}
+            >
+                {children}
+            </li>
+        ),
+        blockquote: ({ children }) => (
+            <blockquote className="my-2 border-l-4 border-gray-400 pl-2 dark:border-gray-600 dark:text-gray-300">
+                {children}
+            </blockquote>
+        ),
+        br: () => <br className="my-2" />,
+        code: ({ children }) => (
+            <code className="my-2 whitespace-pre-wrap text-base">{children}</code>
+        ),
+        pre: ({ children }) => (
+            <pre className="my-2 whitespace-pre-wrap text-base">{children}</pre>
+        ),
+        em: ({ children }) => <em className="italic">{children}</em>,
+        strong: ({ children }) => (
+            <strong className="font-normal text-[#A60000] dark:text-[#FF9999]">
+                {children}
+            </strong>
+        ),
+        del: ({ children }) => <del className="line-through">{children}</del>,
+        a: ({ children, href }) => (
+            <a
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                    "text-blue-500 underline hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300",
+                    getTextWrapClassName(children),
+                )}
+                href={href}
+            >
+                {children}
+            </a>
+        ),
+        img: ({ src, alt }) => (
+            <img className="my-2 w-full object-cover" src={src} alt={alt} />
+        ),
+        hr: () => <hr className="my-2 dark:border-gray-700" />,
+    }
+}
