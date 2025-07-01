@@ -32,19 +32,17 @@ export interface NewsContentItemProps extends DetailContent {
 }
 
 /**
- * @todo 采用 AST 的方法处理。正则很容易出现问题。
- * 该函数用于将 markdown 内容中的 ** ** 之间的内容进行处理，始终在加粗语法外侧添加空格，以确保能够正确被识别为 markdown 的加粗进行处理
- * @param markdownContent
- * @returns
+ * 预处理 markdown 内容
+ * @param markdownContent 原始 markdown 内容
+ * @returns 处理后的 markdown 内容
  */
-
 export const preProcessContent = (markdownContent: string) => {
   return markdownContent.replace(
     /(\*\*)([^*]+?)(\*\*)/g,
     (match, p1, p2, p3) => {
       return ` ${p1}${p2}${p3} `
     },
-  )
+  ).replace(/\\n/g, "\n")
 }
 
 export const formatIndex = (index: string): string => {
